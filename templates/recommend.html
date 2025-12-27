@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Recommender | Find Books</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
+        .text-cyan { color: #008b8b; }
+        .navbar { background-color: #008b8b; border: none; border-radius: 0; padding: 10px 0; }
+        .navbar-brand { color: white !important; font-weight: 800; font-size: 22px; }
+        .nav li a { color: white !important; opacity: 0.8; }
+
+        /* Search Section */
+        .search-box { background: white; padding: 50px; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); margin-top: 40px; border-bottom: 5px solid #008b8b; }
+        .form-control { height: 55px; border-radius: 10px; border: 2px solid #eee; font-size: 16px; transition: 0.3s; }
+        .form-control:focus { border-color: #008b8b; box-shadow: none; }
+        .btn-cyan { background: #008b8b; color: white; font-weight: 700; height: 55px; border-radius: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-cyan:hover { background: #006b6b; color: white; transform: translateY(-2px); }
+
+        /* Recommendation Cards */
+        .result-card { background: white; border-radius: 15px; padding: 15px; margin-top: 30px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); height: 420px; transition: 0.3s; }
+        .result-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,139,139,0.1); }
+        .result-card img { height: 250px; width: 100%; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .result-title { font-weight: 700; font-size: 16px; margin-top: 15px; color: #333; height: 40px; overflow: hidden; }
+
+        /* Error Message styling */
+        .alert-danger { border-radius: 10px; margin-top: 20px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="/">BOOK BUDDY</a>
+        <ul class="nav navbar-nav navbar-right">
+            <li><a href="/">HOME</a></li>
+            <li><a href="/recommend">RECOMMEND</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <div class="search-box">
+                <h2 class="text-center text-cyan" style="font-weight: 800; margin-bottom: 25px;">Search Recommendation</h2>
+
+                {% if error %}
+                    <div class="alert alert-danger text-center">{{ error }}</div>
+                {% endif %}
+
+                <form action="/recommend_books" method="post">
+                    <div class="input-group">
+                        <input name="user_input" type="text" class="form-control" placeholder="Enter a book title you liked (e.g., The Da Vinci Code)">
+                        <span class="input-group-btn">
+                            <button type="submit" class="btn btn-cyan">Find Similar</button>
+                        </span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% if data %}
+    <div class="row" style="margin-top: 40px;">
+        <div class="col-md-12"><h3 class="text-cyan" style="font-weight: 700;">Recommended for You:</h3><hr></div>
+        {% for i in data %}
+            <div class="col-md-3">
+                <div class="result-card">
+                    <a href="/book/{{ i[0] }}" style="text-decoration: none; color: inherit;">
+                        <img src="{{ i[2] }}" alt="book cover">
+                        <p class="result-title">{{ i[0] }}</p>
+                    </a>
+                    <p class="text-cyan"><b>{{ i[1] }}</b></p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Fetch the list of books from our Flask route for autocomplete
+        $.post("/suggest", function(data) {
+            $("input[name='user_input']").autocomplete({
+                source: function(request, response) {
+                    var results = $.ui.autocomplete.filter(data, request.term);
+                    // Only show the first 10 suggestions
+                    response(results.slice(0, 10));
+                },
+                minLength: 2
+            });
+        });
+    });
+</script>
+</body>
+</html>
